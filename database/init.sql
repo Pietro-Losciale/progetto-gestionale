@@ -129,3 +129,68 @@ CREATE TABLE inventory_movements (
         FOREIGN KEY (operated_by)
         REFERENCES users(id)
 );
+
+-- TABELLA LOG ACCESSI
+
+CREATE TABLE access_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id UUID NOT NULL,
+
+    access_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    access_result VARCHAR(20) NOT NULL
+        CHECK (access_result IN ('success', 'failed')),
+
+    ip_address VARCHAR(50),
+
+    CONSTRAINT fk_access_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+);
+
+
+
+
+-- TABELLA RECUPERO PASSWORD
+
+CREATE TABLE password_resets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id UUID NOT NULL,
+
+    reset_token TEXT UNIQUE NOT NULL,
+
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    expiration_date TIMESTAMP NOT NULL,
+
+    status VARCHAR(20) DEFAULT 'unused'
+        CHECK (status IN ('unused', 'used')),
+
+    CONSTRAINT fk_reset_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+);
+
+
+
+
+-- TABELLA NOTIFICHE EMAIL
+
+CREATE TABLE email_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    event_type VARCHAR(100) NOT NULL,
+
+    recipient_email VARCHAR(150) NOT NULL,
+
+    subject TEXT NOT NULL,
+
+    message_body TEXT,
+
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    delivery_status VARCHAR(20) DEFAULT 'pending'
+        CHECK (delivery_status IN ('pending', 'sent', 'failed'))
+);

@@ -16,7 +16,10 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 // funzione main per avviare il server HTTP e Go. (linguaggio compilato->avvio con il comando go run main.go)
 func main() {
 	connectDB()
+
+	// rotte
 	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/login", LoginHandler)
 
 	fmt.Println("Server avviato su http://localhost:8080")
 
