@@ -63,3 +63,7 @@ JWT_SECRET=gestionale_jwt_secret
  - Implementata rotta GET/ protected per verifica JWT, con autenticazione Bearer Token
 
 -Aggiunta logica CRUD per gestione prodotti. 
+
+- Implementata logica movimenti inventario: registrazione carico/scarico prodotti con aggiornamento automatico dello stock di magazzino
+
+-Configurata logica RBAC per gestione autorizzazioni basata sul ruolo.

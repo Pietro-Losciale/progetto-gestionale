@@ -112,8 +112,34 @@ func ProtectedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// recupera claims JWT
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Errore claims JWT", http.StatusUnauthorized)
+		return
+	}
+
+	// recupera user_id dal token
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		http.Error(w, "Errore user_id JWT", http.StatusUnauthorized)
+		return
+	}
+
+	// verifica ruolo admin
+	isAdmin, err := CheckAdminRole(userID)
+	if err != nil {
+		http.Error(w, "Errore verifica ruolo", http.StatusInternalServerError)
+		return
+	}
+
+	if !isAdmin {
+		http.Error(w, "Accesso negato: permessi insufficienti", http.StatusForbidden)
+		return
+	}
+
 	// accesso consentito
-	w.Write([]byte("Accesso autorizzato alla route protetta"))
+	w.Write([]byte("Accesso autorizzato: ruolo admin verificato"))
 }
 
 // log degli accessi
@@ -275,4 +301,25 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// funzione RBAC
+func CheckAdminRole(userID string) (bool, error) {
+
+	var roleName string
+
+	query := `
+		SELECT roles.role_name
+		FROM users
+		JOIN roles
+			ON users.role_id = roles.id
+		WHERE users.id = $1
+	`
+
+	err := DB.QueryRow(query, userID).Scan(&roleName)
+	if err != nil {
+		return false, err
+	}
+
+	return roleName == "admin", nil
 }

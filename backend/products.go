@@ -17,6 +17,15 @@ type Product struct {
 	CreatedBy             string  `json:"created_by"`
 }
 
+// struttura movimenti del magazzino
+type InventoryMovement struct {
+	ProductID    string `json:"product_id"`
+	MovementType string `json:"movement_type"`
+	Quantity     int    `json:"quantity"`
+	OperatedBy   string `json:"operated_by"`
+	Notes        string `json:"notes"`
+}
+
 // FUNZIONI CRUD
 
 //CREATE
@@ -217,4 +226,75 @@ func DeleteProductHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("Prodotto eliminato correttamente"))
+}
+
+//funzione gestione dei movimenti in magazzino
+
+func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
+
+	// accetta solo POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var movement InventoryMovement
+
+	// decode JSON
+	err := json.NewDecoder(r.Body).Decode(&movement)
+	if err != nil {
+		http.Error(w, "Errore lettura movimento", http.StatusBadRequest)
+		return
+	}
+
+	// salvataggio movimento nel DB
+	query := `
+		INSERT INTO inventory_movements (
+			product_id,
+			movement_type,
+			quantity,
+			operated_by,
+			notes
+		)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	_, err = DB.Exec(
+		query,
+		movement.ProductID,
+		movement.MovementType,
+		movement.Quantity,
+		movement.OperatedBy,
+		movement.Notes,
+	)
+
+	if err != nil {
+		http.Error(w, "Errore creazione movimento", http.StatusInternalServerError)
+		return
+	}
+
+	// aggiorna quantità prodotto
+	if movement.MovementType == "load" {
+
+		_, err = DB.Exec(`
+			UPDATE products
+			SET quantity_available = quantity_available + $1
+			WHERE id = $2
+		`, movement.Quantity, movement.ProductID)
+
+	} else if movement.MovementType == "unload" {
+
+		_, err = DB.Exec(`
+			UPDATE products
+			SET quantity_available = quantity_available - $1
+			WHERE id = $2
+		`, movement.Quantity, movement.ProductID)
+	}
+
+	if err != nil {
+		http.Error(w, "Errore aggiornamento quantità prodotto", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("Movimento inventario registrato correttamente"))
 }

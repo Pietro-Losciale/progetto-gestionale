@@ -21,6 +21,7 @@ func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/protected", ProtectedHandler)
+	http.HandleFunc("/inventory/movement", CreateInventoryMovementHandler)
 
 	// rotte per la gestione dei prodotti (CRUD)
 	http.HandleFunc("/products", CreateProductHandler)
