@@ -60,3 +60,6 @@ JWT_SECRET=gestionale_jwt_secret
  -Implementata logica di logging accessi per Audit trail: tentativi riusciti, falliti, timestamp ed indirizzo IP. 
 
  -Aggiornata generazione JWT con implementazione di ACCESS TOKEN (15 MIN) e REFRESH TOKEN (7GG)
+ - Implementata rotta GET/ protected per verifica JWT, con autenticazione Bearer Token
+
+-Aggiunta logica CRUD per gestione prodotti. 

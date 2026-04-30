@@ -20,6 +20,13 @@ func main() {
 	// rotte
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/protected", ProtectedHandler)
+
+	// rotte per la gestione dei prodotti (CRUD)
+	http.HandleFunc("/products", CreateProductHandler)
+	http.HandleFunc("/products/read", GetProductsHandler)
+	http.HandleFunc("/products/update", UpdateProductHandler)
+	http.HandleFunc("/products/delete", DeleteProductHandler)
 
 	fmt.Println("Server avviato su http://localhost:8080")
 

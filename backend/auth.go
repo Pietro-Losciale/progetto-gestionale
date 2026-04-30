@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -66,6 +67,53 @@ func GenerateRefreshToken(userID string, username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// verifica del JWT
+func VerifyJWT(tokenString string) (*jwt.Token, error) {
+
+	err := godotenv.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	secretKey := []byte(os.Getenv("JWT_SECRET"))
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+func ProtectedHandler(w http.ResponseWriter, r *http.Request) {
+
+	// prende header Authorization
+	authHeader := r.Header.Get("Authorization")
+
+	// verifica presenza token
+	if authHeader == "" {
+		http.Error(w, "Token mancante", http.StatusUnauthorized)
+		return
+	}
+
+	// formato atteso:
+	// Authorization: Bearer TOKEN
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	// verifica JWT
+	token, err := VerifyJWT(tokenString)
+	if err != nil || !token.Valid {
+		http.Error(w, "Token non valido", http.StatusUnauthorized)
+		return
+	}
+
+	// accesso consentito
+	w.Write([]byte("Accesso autorizzato alla route protetta"))
 }
 
 // log degli accessi
