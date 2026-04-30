@@ -53,6 +53,10 @@ JWT_SECRET=gestionale_jwt_secret
  -creata la logica di autenticazione (auth.go). Chiamata API rest dal front-end, check su:
  esistenza hash password inserita e utente inserito nel db
  verifica di eventuale soft lock 
- soft lock dopo 5 tentativi errati di inserimento password.
+ soft lock dopo 5 tentativi errati di inserimento password.(per reset account:agire con reset amministrativo da database)
 
  -Implementato endpoint POST /login con autenticazione tramite bcrypt e generazione JWT (testato tramite cUrl)
+ 
+ -Implementata logica di logging accessi per Audit trail: tentativi riusciti, falliti, timestamp ed indirizzo IP. 
+
+ -Aggiornata generazione JWT con implementazione di ACCESS TOKEN (15 MIN) e REFRESH TOKEN (7GG)

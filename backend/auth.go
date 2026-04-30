@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -41,6 +42,48 @@ func GenerateJWT(userID string, username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// refresh token
+func GenerateRefreshToken(userID string, username string) (string, error) {
+
+	err := godotenv.Load()
+	if err != nil {
+		return "", err
+	}
+
+	secretKey := []byte(os.Getenv("JWT_SECRET"))
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  userID,
+		"username": username,
+		"exp":      time.Now().Add(7 * 24 * time.Hour).Unix(),
+	})
+
+	tokenString, err := token.SignedString(secretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// log degli accessi
+
+func CreateAccessLog(userID string, accessResult string, ipAddress string) {
+
+	_, err := DB.Exec(`
+		INSERT INTO access_logs (
+			user_id,
+			access_result,
+			ip_address
+		)
+		VALUES ($1, $2, $3)
+	`, userID, accessResult, ipAddress)
+
+	if err != nil {
+		fmt.Println("Errore creazione access log:", err)
+	}
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +150,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		// incrementa i tentativi falliti
 		failedAttempts++
 
+		// access log per tentativo fallito
+
+		CreateAccessLog(userID, "failed", r.RemoteAddr)
+
 		// se arriva a 5 blocca l’account
 		if failedAttempts >= 5 {
 			_, err = DB.Exec(`
@@ -154,16 +201,28 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// generazione JWT
-	token, err := GenerateJWT(userID, loginData.Username)
+	// access log per login riuscito
+
+	CreateAccessLog(userID, "success", r.RemoteAddr)
+
+	// generazione access token
+	accessToken, err := GenerateJWT(userID, loginData.Username)
 	if err != nil {
-		http.Error(w, "Errore generazione token", http.StatusInternalServerError)
+		http.Error(w, "Errore generazione access token", http.StatusInternalServerError)
+		return
+	}
+
+	// generazione refresh token
+	refreshToken, err := GenerateRefreshToken(userID, loginData.Username)
+	if err != nil {
+		http.Error(w, "Errore generazione refresh token", http.StatusInternalServerError)
 		return
 	}
 
 	// risposta JSON con token
 	response := map[string]string{
-		"access_token": token,
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
