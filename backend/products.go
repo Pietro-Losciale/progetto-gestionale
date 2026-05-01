@@ -298,3 +298,77 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte("Movimento inventario registrato correttamente"))
 }
+
+// storico movimenti magazzino
+type InventoryMovementResponse struct {
+	ID             string `json:"id"`
+	ProductName    string `json:"product_name"`
+	MovementType   string `json:"movement_type"`
+	Quantity       int    `json:"quantity"`
+	MovementDate   string `json:"movement_date"`
+	OperatedByName string `json:"operated_by_name"`
+	Notes          string `json:"notes"`
+}
+
+// GET INVENTORY MOVEMENTS
+
+func GetInventoryMovementsHandler(w http.ResponseWriter, r *http.Request) {
+
+	// accetta solo GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// query con JOIN
+	rows, err := DB.Query(`
+		SELECT
+			im.id,
+			p.product_name,
+			im.movement_type,
+			im.quantity,
+			im.movement_date,
+			u.username,
+			im.notes
+		FROM inventory_movements im
+		JOIN products p
+			ON im.product_id = p.id
+		JOIN users u
+			ON im.operated_by = u.id
+		ORDER BY im.movement_date DESC
+	`)
+
+	if err != nil {
+		http.Error(w, "Errore recupero movimenti inventario", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var movements []InventoryMovementResponse
+
+	// loop risultati query
+	for rows.Next() {
+
+		var movement InventoryMovementResponse
+
+		err := rows.Scan(
+			&movement.ID,
+			&movement.ProductName,
+			&movement.MovementType,
+			&movement.Quantity,
+			&movement.MovementDate,
+			&movement.OperatedByName,
+			&movement.Notes,
+		)
+
+		if err != nil {
+			fmt.Println("Errore scansione movimento:", err)
+			continue
+		}
+
+		movements = append(movements, movement)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movements)
+}

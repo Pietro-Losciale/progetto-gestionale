@@ -46,18 +46,18 @@ JWT_SECRET=gestionale_jwt_secret
 
 
 # Stato attuale
--Creata la logica backend iniziale con Go
+- Creata la logica backend iniziale con Go
 
- -Creata struttura database con tabelle. Presente file.md in /docs con elenco delle tabelle e relazioni tra esse. UUID utilizzato per le primary keys delle tabelle.
+ - Creata struttura database con tabelle. Presente file.md in /docs con elenco delle tabelle e relazioni tra esse. UUID utilizzato per le primary keys delle tabelle.
 
- -creata la logica di autenticazione (auth.go). Chiamata API rest dal front-end, check su:
+ - creata la logica di autenticazione (auth.go). Chiamata API rest dal front-end, check su:
  esistenza hash password inserita e utente inserito nel db
  verifica di eventuale soft lock 
  soft lock dopo 5 tentativi errati di inserimento password.(per reset account:agire con reset amministrativo da database)
 
- -Implementato endpoint POST /login con autenticazione tramite bcrypt e generazione JWT (testato tramite cUrl)
+ - Implementato endpoint POST /login con autenticazione tramite bcrypt e generazione JWT (testato tramite cUrl)
  
- -Implementata logica di logging accessi per Audit trail: tentativi riusciti, falliti, timestamp ed indirizzo IP. 
+ - Implementata logica di logging accessi per Audit trail: tentativi riusciti, falliti, timestamp ed indirizzo IP. 
 
  -Aggiornata generazione JWT con implementazione di ACCESS TOKEN (15 MIN) e REFRESH TOKEN (7GG)
  - Implementata rotta GET/ protected per verifica JWT, con autenticazione Bearer Token
@@ -66,4 +66,10 @@ JWT_SECRET=gestionale_jwt_secret
 
 - Implementata logica movimenti inventario: registrazione carico/scarico prodotti con aggiornamento automatico dello stock di magazzino
 
--Configurata logica RBAC per gestione autorizzazioni basata sul ruolo.
+- Configurata logica RBAC per gestione autorizzazioni basata sul ruolo.
+
+- Aggiunta logica CRUD per utenti (con soft delete)
+
+- Aggiunta protezione Middleware JWT a tutte le rotte. 
+
+- Implementata visualizzazione storico carico/scarico prodotti con dati utente e informazioni prodotto

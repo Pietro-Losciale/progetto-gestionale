@@ -20,15 +20,22 @@ func main() {
 	// rotte
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/login", LoginHandler)
-	http.HandleFunc("/protected", ProtectedHandler)
-	http.HandleFunc("/inventory/movement", CreateInventoryMovementHandler)
+	http.HandleFunc("/protected", AuthMiddleware(ProtectedHandler))
+
+	http.HandleFunc("/inventory/movement", AuthMiddleware(CreateInventoryMovementHandler))
+	http.HandleFunc("/inventory/movements", AuthMiddleware(GetInventoryMovementsHandler))
+
+	// rotte per la gestione degli utenti (CRUD)
+	http.HandleFunc("/users/create", AuthMiddleware(CreateUserHandler))
+	http.HandleFunc("/users/read", AuthMiddleware(GetUsersHandler))
+	http.HandleFunc("/users/update", AuthMiddleware(UpdateUserHandler))
+	http.HandleFunc("/users/delete", AuthMiddleware(DeleteUserHandler))
 
 	// rotte per la gestione dei prodotti (CRUD)
-	http.HandleFunc("/products", CreateProductHandler)
-	http.HandleFunc("/products/read", GetProductsHandler)
-	http.HandleFunc("/products/update", UpdateProductHandler)
-	http.HandleFunc("/products/delete", DeleteProductHandler)
-
+	http.HandleFunc("/products", AuthMiddleware(CreateProductHandler))
+	http.HandleFunc("/products/read", AuthMiddleware(GetProductsHandler))
+	http.HandleFunc("/products/update", AuthMiddleware(UpdateProductHandler))
+	http.HandleFunc("/products/delete", AuthMiddleware(DeleteProductHandler))
 	fmt.Println("Server avviato su http://localhost:8080")
 
 	// avvio del server HTTP sulla porta 8080.
