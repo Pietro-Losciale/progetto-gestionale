@@ -46,6 +46,9 @@ JWT_SECRET=gestionale_jwt_secret
 
 
 # Stato attuale
+
+
+## Back-end
 - Creata la logica backend iniziale con Go
 
  - Creata struttura database con tabelle. Presente file.md in /docs con elenco delle tabelle e relazioni tra esse. UUID utilizzato per le primary keys delle tabelle.
@@ -62,7 +65,7 @@ JWT_SECRET=gestionale_jwt_secret
  -Aggiornata generazione JWT con implementazione di ACCESS TOKEN (15 MIN) e REFRESH TOKEN (7GG)
  - Implementata rotta GET/ protected per verifica JWT, con autenticazione Bearer Token
 
--Aggiunta logica CRUD per gestione prodotti. 
+- Aggiunta logica CRUD per gestione prodotti. 
 
 - Implementata logica movimenti inventario: registrazione carico/scarico prodotti con aggiornamento automatico dello stock di magazzino
 
@@ -73,3 +76,11 @@ JWT_SECRET=gestionale_jwt_secret
 - Aggiunta protezione Middleware JWT a tutte le rotte. 
 
 - Implementata visualizzazione storico carico/scarico prodotti con dati utente e informazioni prodotto
+
+- Aggiunta chiamata API per visualizzare e consultare lo storico dei logs utenti dal DB (audit trail accessi)
+
+- Limitato accesso alle route amministrative ai soli utenti admin tramite RBAC
+
+- Implementata logica low stock per identificazione prodotti in esaurimento, con sistema di prevenzione stock negativi nel magazzino
+
+## Front-End

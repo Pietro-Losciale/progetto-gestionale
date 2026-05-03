@@ -242,8 +242,17 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 
 	// decode JSON
 	err := json.NewDecoder(r.Body).Decode(&movement)
+
 	if err != nil {
 		http.Error(w, "Errore lettura movimento", http.StatusBadRequest)
+		return
+	}
+
+	// avvio transaction
+	tx, err := DB.Begin()
+
+	if err != nil {
+		http.Error(w, "Errore avvio transazione", http.StatusInternalServerError)
 		return
 	}
 
@@ -259,7 +268,7 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 		VALUES ($1, $2, $3, $4, $5)
 	`
 
-	_, err = DB.Exec(
+	_, err = tx.Exec(
 		query,
 		movement.ProductID,
 		movement.MovementType,
@@ -269,6 +278,7 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		tx.Rollback()
 		http.Error(w, "Errore creazione movimento", http.StatusInternalServerError)
 		return
 	}
@@ -276,7 +286,7 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 	// aggiorna quantità prodotto
 	if movement.MovementType == "load" {
 
-		_, err = DB.Exec(`
+		_, err = tx.Exec(`
 			UPDATE products
 			SET quantity_available = quantity_available + $1
 			WHERE id = $2
@@ -284,7 +294,30 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 
 	} else if movement.MovementType == "unload" {
 
-		_, err = DB.Exec(`
+		var currentStock int
+
+		// recupera quantità attuale prodotto
+		err = tx.QueryRow(`
+			SELECT quantity_available
+			FROM products
+			WHERE id = $1
+		`, movement.ProductID).Scan(&currentStock)
+
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, "Errore recupero stock prodotto", http.StatusInternalServerError)
+			return
+		}
+
+		// blocca stock negativo
+		if currentStock < movement.Quantity {
+			tx.Rollback()
+			http.Error(w, "Quantità insufficiente in magazzino", http.StatusBadRequest)
+			return
+		}
+
+		// aggiorna quantità prodotto
+		_, err = tx.Exec(`
 			UPDATE products
 			SET quantity_available = quantity_available - $1
 			WHERE id = $2
@@ -292,7 +325,17 @@ func CreateInventoryMovementHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
+		tx.Rollback()
 		http.Error(w, "Errore aggiornamento quantità prodotto", http.StatusInternalServerError)
+		return
+	}
+
+	// commit finale transaction
+	err = tx.Commit()
+
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, "Errore commit transazione", http.StatusInternalServerError)
 		return
 	}
 
@@ -371,4 +414,66 @@ func GetInventoryMovementsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movements)
+}
+
+// GET LOW STOCK PRODUCTS
+
+func GetLowStockProductsHandler(w http.ResponseWriter, r *http.Request) {
+
+	// accetta solo GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// query prodotti low stock
+	rows, err := DB.Query(`
+		SELECT
+			id,
+			product_name,
+			description,
+			quantity_available,
+			unit_price,
+			minimum_stock_threshold,
+			product_type_id,
+			created_by
+		FROM products
+		WHERE quantity_available <= minimum_stock_threshold
+		AND deleted_at IS NULL
+	`)
+
+	if err != nil {
+		http.Error(w, "Errore recupero prodotti low stock", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var products []Product
+
+	// loop risultati
+	for rows.Next() {
+
+		var product Product
+
+		err := rows.Scan(
+			&product.ID,
+			&product.ProductName,
+			&product.Description,
+			&product.QuantityAvailable,
+			&product.UnitPrice,
+			&product.MinimumStockThreshold,
+			&product.ProductTypeID,
+			&product.CreatedBy,
+		)
+
+		if err != nil {
+			fmt.Println("Errore scansione prodotto low stock:", err)
+			continue
+		}
+
+		products = append(products, product)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
 }

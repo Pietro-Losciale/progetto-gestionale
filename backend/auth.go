@@ -323,3 +323,68 @@ func CheckAdminRole(userID string) (bool, error) {
 
 	return roleName == "admin", nil
 }
+
+// struttura per log accessi
+
+type AccessLogResponse struct {
+	ID           string `json:"id"`
+	Username     string `json:"username"`
+	AccessDate   string `json:"access_date"`
+	AccessResult string `json:"access_result"`
+	IPAddress    string `json:"ip_address"`
+}
+
+func GetAccessLogsHandler(w http.ResponseWriter, r *http.Request) {
+
+	// accetta solo GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// query JOIN logs + users
+	rows, err := DB.Query(`
+		SELECT
+			al.id,
+			u.username,
+			al.access_date,
+			al.access_result,
+			al.ip_address
+		FROM access_logs al
+		JOIN users u
+			ON al.user_id = u.id
+		ORDER BY al.access_date DESC
+	`)
+
+	if err != nil {
+		http.Error(w, "Errore recupero log accessi", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var logs []AccessLogResponse
+
+	// loop risultati
+	for rows.Next() {
+
+		var log AccessLogResponse
+
+		err := rows.Scan(
+			&log.ID,
+			&log.Username,
+			&log.AccessDate,
+			&log.AccessResult,
+			&log.IPAddress,
+		)
+
+		if err != nil {
+			fmt.Println("Errore scansione log accesso:", err)
+			continue
+		}
+
+		logs = append(logs, log)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(logs)
+}

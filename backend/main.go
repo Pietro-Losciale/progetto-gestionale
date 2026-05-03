@@ -24,12 +24,14 @@ func main() {
 
 	http.HandleFunc("/inventory/movement", AuthMiddleware(CreateInventoryMovementHandler))
 	http.HandleFunc("/inventory/movements", AuthMiddleware(GetInventoryMovementsHandler))
+	http.HandleFunc("/access-logs", AuthMiddleware(GetAccessLogsHandler))
+	http.HandleFunc("/products/low-stock", AuthMiddleware(GetLowStockProductsHandler))
 
 	// rotte per la gestione degli utenti (CRUD)
-	http.HandleFunc("/users/create", AuthMiddleware(CreateUserHandler))
-	http.HandleFunc("/users/read", AuthMiddleware(GetUsersHandler))
-	http.HandleFunc("/users/update", AuthMiddleware(UpdateUserHandler))
-	http.HandleFunc("/users/delete", AuthMiddleware(DeleteUserHandler))
+	http.HandleFunc("/users/create", AdminOnlyMiddleware(CreateUserHandler))
+	http.HandleFunc("/users/read", AdminOnlyMiddleware(GetUsersHandler))
+	http.HandleFunc("/users/update", AdminOnlyMiddleware(UpdateUserHandler))
+	http.HandleFunc("/users/delete", AdminOnlyMiddleware(DeleteUserHandler))
 
 	// rotte per la gestione dei prodotti (CRUD)
 	http.HandleFunc("/products", AuthMiddleware(CreateProductHandler))
