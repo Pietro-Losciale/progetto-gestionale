@@ -83,4 +83,16 @@ JWT_SECRET=gestionale_jwt_secret
 
 - Implementata logica low stock per identificazione prodotti in esaurimento, con sistema di prevenzione stock negativi nel magazzino
 
+- aggiunta funzione categoria prodotti (toner, carta, buste) come da consegna, effettuato seeder nel DB.
+
 ## Front-End
+
+- Realizzata pagina di login con autenticazione collegata al back-end Go tramite JWT
+
+- Iniziata dashboard amministrativa del gestionale
+
+- Configurata comunicazione front-end / back-end tramite API REST
+
+- realizzata dashboard gestionale con stile bootstrap italia, chiamata API per fetch utenti, prodotti e low stock
+
+-realizzate views per ogni elemento della dashboard: utenti, prodotti, low stock.

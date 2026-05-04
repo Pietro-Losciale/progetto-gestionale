@@ -477,3 +477,58 @@ func GetLowStockProductsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(products)
 }
+
+// tipologie di prodotto
+
+type ProductType struct {
+	ID          string `json:"id"`
+	TypeName    string `json:"type_name"`
+	Description string `json:"description"`
+}
+
+func GetProductTypesHandler(w http.ResponseWriter, r *http.Request) {
+
+	// accetta solo GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
+		return
+	}
+
+	rows, err := DB.Query(`
+		SELECT
+			id,
+			type_name,
+			description
+		FROM product_types
+		ORDER BY type_name ASC
+	`)
+
+	if err != nil {
+		http.Error(w, "Errore recupero tipi prodotto", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var productTypes []ProductType
+
+	for rows.Next() {
+
+		var productType ProductType
+
+		err := rows.Scan(
+			&productType.ID,
+			&productType.TypeName,
+			&productType.Description,
+		)
+
+		if err != nil {
+			fmt.Println("Errore scansione tipo prodotto:", err)
+			continue
+		}
+
+		productTypes = append(productTypes, productType)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(productTypes)
+}

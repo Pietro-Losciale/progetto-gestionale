@@ -1,66 +1,127 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+
+export default function LoginPage() {
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e) => {
+
+    e.preventDefault();
+
+    setError("");
+
+    try {
+
+      const response = await fetch("http://localhost:8080/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        setError("Credenziali non valide");
+        return;
+      }
+
+      const data = await response.json();
+
+      // salvataggio token
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+
+      console.log("LOGIN OK", data);
+
+      window.location.href = "/dashboard";
+
+    } catch (err) {
+
+      console.error(err);
+      setError("Errore connessione backend");
+
+    }
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="container py-5">
+
+      <div className="row justify-content-center">
+
+        <div className="col-12 col-md-6 col-lg-4">
+
+          <div className="card shadow-sm border-0 rounded-4">
+
+            <div className="card-body p-4">
+
+              <h1 className="h3 text-center mb-4">
+                Gestionale Magazzino
+              </h1>
+
+              <form onSubmit={handleLogin}>
+
+                <div className="mb-3">
+
+                  <label className="form-label">
+                    Username
+                  </label>
+
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+
+                </div>
+
+                <div className="mb-4">
+
+                  <label className="form-label">
+                    Password
+                  </label>
+
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+
+                </div>
+
+                {error && (
+                  <div className="alert alert-danger">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                >
+                  Accedi
+                </button>
+
+              </form>
+
+            </div>
+
+          </div>
+
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+      </div>
+
+    </main>
   );
 }
