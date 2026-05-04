@@ -36,8 +36,28 @@ npm run dev
 PostgreSQL:
 CREATE DATABASE gestionale_db;
 
-eseguire file.sql:
+Eseguire i file SQL:
+
 \i percorso/database/init.sql
+
+\i percorso/database/seeder.sql
+
+Il file seeder.sql crea automaticamente:
+- ruoli iniziali
+- utenti demo
+- categorie prodotto
+
+## Credenziali demo
+
+Admin:
+username: admin
+password: Admin123!
+
+Operatore:
+username: operatore1
+password: Operatore123!
+
+
 
 **Variabili d'ambiente**
 Creare file .env in /backend
@@ -95,4 +115,6 @@ JWT_SECRET=gestionale_jwt_secret
 
 - realizzata dashboard gestionale con stile bootstrap italia, chiamata API per fetch utenti, prodotti e low stock
 
--realizzate views per ogni elemento della dashboard: utenti, prodotti, low stock.
+- realizzate views per ogni elemento della dashboard: utenti, prodotti, low stock.
+
+-creata view per la creazione nuovo prodotto. 
